@@ -1,0 +1,30 @@
+*.iml
+*.orig
+.gradle
+.kotlin
+.idea
+/local.properties
+/.idea
+.DS_Store
+/app/release
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Android build outputs
+/build/
+/app/build/
+*.apk
+.vscode/settings.json
+PR_BODY.md
+astryxbook-release.b64
+astryxbook-release.jks
+jacoco-debug.log
+
+# Signing keys — EXCEPT the family's own debug.keystore which MUST travel
+# with the repo (it was nearly lost to a rollback once): every merged release
+# signs with it, and without it nobody can build an upgradable APK again.
+*.jks
+*.keystore
+!debug.keystore

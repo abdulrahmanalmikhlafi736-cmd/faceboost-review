@@ -1,0 +1,60 @@
+name: Build APK
+
+# Every push to main builds a signed release APK and publishes it as a
+# GitHub release (2.18.<n> — سلالة F PRO المحبوبة، انظر خطوة Version).
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - 'fastlane/**'
+      - 'assets/**'
+      - '.github/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '21'
+          cache: gradle
+
+      # 2.18.<n>: المحلي المسلّم وصل 2.18.1 (2180001)؛ إصدارات CI تبدأ من
+      # 2.18.101 (vc 2180101) فما فوق — فوق كل رقعنا المحلية ولا تتصادم معها.
+      - name: Version
+        run: echo "VERSION=2.18.$(( 100 + ${{ github.run_number }} ))" >> "$GITHUB_ENV"
+
+      - name: Build release APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease -PversionNameOverride=$VERSION
+
+      - name: Sign APK
+        run: |
+          echo "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > "$RUNNER_TEMP/keystore.jks"
+          APKSIGNER=$(ls -d $ANDROID_HOME/build-tools/*/ | sort -V | tail -n 1)apksigner
+          "$APKSIGNER" sign \
+            --ks "$RUNNER_TEMP/keystore.jks" \
+            --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
+            --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
+            --key-pass pass:${{ secrets.KEY_PASSWORD }} \
+            --out Faceboost-Almekhlafi-$VERSION.apk \
+            app/build/outputs/apk/release/app-release.apk
+          rm -f "$RUNNER_TEMP/keystore.jks"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v$VERSION Faceboost-Almekhlafi-$VERSION.apk \
+            --title "Faceboost Almekhlafi v$VERSION" \
+            --generate-notes --target "${{ github.sha }}"

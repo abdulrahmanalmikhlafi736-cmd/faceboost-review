@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Messenger voice and video calls in the Messages layer. Asked for only when a call
+         starts, and only Facebook's own pages can use them (see webMediaGrant). WebView needs
+         MODIFY_AUDIO_SETTINGS for call audio (a normal permission, no prompt). -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+
+    <queries>
+        <package android:name="com.facebook.orca" />
+        <package android:name="com.facebook.mlite" />
+        <!-- Our fpro external downloader handoff (Seal is the default package). -->
+        <package android:name="com.junkfood.seal" />
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="text/plain" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" android:host="m.me" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" android:host="messenger.com" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="fb-messenger" />
+        </intent>
+    </queries>
+
+
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Astryxbook"
+        tools:targetApi="31">
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="screenLayout|orientation|screenSize|keyboard|keyboardHidden|smallestScreenSize|uiMode"
+            android:launchMode="singleTop"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="true"
+            android:supportsPictureInPicture="true"
+            android:resizeableActivity="true"
+            android:theme="@style/Theme.Astryxbook">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Share to the app: links and text, pictures, videos. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
+
+            <!-- The chats offered in the share sheet (see res/xml/shortcuts.xml). -->
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
+
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="https" />
+                <data android:host="www.facebook.com" />
+                <data android:scheme="https" />
+                <data android:host="m.facebook.com" />
+                <data android:scheme="https" />
+                <data android:host="fb.watch" />
+                <data android:scheme="https" />
+                <data android:host="facebook.com" />
+                <data android:scheme="https" />
+                <data android:host="web.facebook.com" />
+                <data android:scheme="https" />
+                <data android:host="mobile.facebook.com" />
+                <data android:scheme="https" />
+                <data android:host="touch.facebook.com" />
+                <data android:scheme="https" />
+                <data android:host="mbasic.facebook.com" />
+                <data android:scheme="https" />
+                <data android:host="fb.com" />
+                <data android:scheme="https" />
+                <data android:host="www.fb.com" />
+                <data android:scheme="https" />
+                <data android:host="fb.me" />
+                <data android:scheme="https" />
+                <data android:host="www.fb.me" />
+            </intent-filter>
+
+            <!-- Facebook app deep links: fb://profile/123, facebook://page/456 ... -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="fb" />
+                <data android:scheme="facebook" />
+            </intent-filter>
+
+        </activity>
+
+        <!-- Native audio for a PiP video while the screen is locked. Exported
+             because Media3 controllers must bind to it; the session itself
+             only accepts this app's own controller (see LockScreenAudioService). -->
+        <service
+            android:name=".audio.LockScreenAudioService"
+            android:exported="true"
+            tools:ignore="ExportedService"
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+            </intent-filter>
+        </service>
+
+        <!-- "Facebook notifications" setting: a periodic check of the counts Facebook shows. -->
+        <service
+            android:name=".utils.NotificationPollService"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <!-- Our fpro "صوت فقط" (audio-only) mode: foreground service keeping the
+             video's audio playing in the background with media controls. -->
+        <service
+            android:name=".audio.AudioPlaybackService"
+            android:exported="false"
+            android:stopWithTask="true"
+            android:foregroundServiceType="mediaPlayback" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_provider_paths" />
+        </provider>
+
+    </application>
+
+</manifest>
